@@ -1,16 +1,9 @@
 package main
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-var regVertexNormalFormat *regexp.Regexp
-
-func init() {
-	regVertexNormalFormat = regexp.MustCompile(`^([-+]?[0-9]*(?:\.?[0-9]+)) ([-+]?[0-9]*(?:\.?[0-9]+)) ([-+]?[0-9]*(?:\.?[0-9]+))$`)
-}
 
 // VertexNormal _ (vn)
 type VertexNormal struct {
@@ -32,18 +25,6 @@ func (vn *VertexNormal) Marshal(options MarshalOptions) string {
 }
 
 // UnmarshalVertexNormal _
-func UnmarshalVertexNormal(s string) (*VertexNormal, error) {
-	match := regVertexNormalFormat.FindStringSubmatch(s)
-	if match == nil {
-		return nil, ErrInvalidFormat
-	}
-
-	match = match[1:]
-
-	args, _, err := parseFloatArguments(match, 3, 3)
-	if err != nil {
-		return nil, ErrInvalidArgument
-	}
-
-	return &VertexNormal{args[0], args[1], args[2]}, nil
+func UnmarshalVertexNormal(s string) (vn VertexNormal, err error) {
+	return
 }

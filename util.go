@@ -4,63 +4,96 @@ import (
 	"strconv"
 )
 
-func vIndex(vertices []*GeometricVertex, v *GeometricVertex) (int, error) {
-	for i, x := range vertices {
-		if x == v {
-			return i + 1, nil
+func parseFloat(v string) (val float32, rest string, ok bool) {
+	if v == "" {
+		ok = false
+		return
+	}
+	i := 0
+	if v[0] == '+' || v[0] == '-' {
+		i++
+	}
+	if i == len(v) {
+		ok = false
+		return
+	}
+	if v[i] < '0' || v[i] > '9' {
+		ok = false
+		return
+	}
+	i++
+	dot := false
+	for i < len(v) && (v[i] >= '0' && v[i] <= '9' || v[i] == '.') {
+		if v[i] == '.' {
+			if dot == true {
+				ok = false
+				return
+			}
+			dot = true
 		}
+		i++
 	}
-
-	return 0, ErrVerticeNotFound
-}
-
-func vtIndex(texcoords []*TextureVertex, vt *TextureVertex) (int, error) {
-	for i, x := range texcoords {
-		if x == vt {
-			return i + 1, nil
-		}
+	if dot == true && v[i-1] == '.' {
+		ok = false
+		return
 	}
-
-	return 0, ErrTexCoordNotFound
-}
-
-func vnIndex(normals []*VertexNormal, vn *VertexNormal) (int, error) {
-	for i, x := range normals {
-		if x == vn {
-			return i + 1, nil
-		}
-	}
-
-	return 0, ErrNormalNotFound
-}
-
-func assertArgumentCount(length, min, max int) error {
-	if length < min {
-		return ErrInsuficientArguments
-	}
-	if max != -1 && length > max {
-		return ErrTooManyArguments
-	}
-	return nil
-}
-
-func parseFloatArguments(src []string, min int, max int) ([]float32, int, error) {
-	err := assertArgumentCount(len(src), min, max)
+	val64, err := strconv.ParseFloat(v[:i], 32)
 	if err != nil {
-		return nil, 0, err
+		ok = false
+		return
 	}
+	val = float32(val64)
+	rest = v[i:]
+	ok = true
+	return
+}
 
-	r := make([]float32, 0, len(src))
-
-	// ensure values are valid
-	for i, s := range src {
-		v, err := strconv.ParseFloat(s, 32)
-		if err != nil {
-			return nil, i, err
-		}
-
-		r = append(r, float32(v))
+func parseInteger(v string) (val int32, rest string, ok bool) {
+	if v == "" {
+		ok = false
+		return
 	}
+	i := 0
+	if v[0] == '+' || v[0] == '-' {
+		i++
+	}
+	if i >= len(v) {
+		ok = false
+		return
+	}
+	if v[i] < '0' || v[i] > '9' {
+		ok = false
+		return
+	}
+	i++
+	for i < len(v) && v[i] >= '0' && v[i] <= '9' {
+		i++
+	}
+	val64, err := strconv.ParseInt(v[:i], 10, 32)
+	if err != nil {
+		ok = false
+		return
+	}
+	val = int32(val64)
+	rest = v[i:]
+	ok = true
+	return
+}
 
-	return r, len(r) - 1, nil
+func skipSpaces(s string) (rest string, ok bool) {
+	if s == "" {
+		ok = false
+		return
+	}
+	if s[0] != ' ' && s[0] != '\t' {
+		ok = false
+		return
+	}
+	i := 1
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		i++
+	}
+	rest = s[i:]
+	ok = true
+	return
 }

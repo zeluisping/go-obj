@@ -1,16 +1,9 @@
 package main
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-var regGeometricVertexFormat *regexp.Regexp
-
-func init() {
-	regGeometricVertexFormat = regexp.MustCompile(`^([-+]?[0-9]*(?:\.?[0-9]+)) (?:([-+]?[0-9]*(?:\.?[0-9]+)) ([-+]?[0-9]*(?:\.?[0-9]+))?)?$`)
-}
 
 // GeometricVertex _ (v)
 type GeometricVertex struct {
@@ -28,32 +21,75 @@ func (v *GeometricVertex) Marshal(options MarshalOptions) string {
 	sb.WriteString(strconv.FormatFloat(float64(v.Y), 'f', options.FloatPrecision, 32))
 	sb.WriteRune(' ')
 	sb.WriteString(strconv.FormatFloat(float64(v.Z), 'f', options.FloatPrecision, 32))
-	// if v.W != 1 {
+
+	if options.OmitDefaultOptional && v.W == 1 {
+		return sb.String()
+	}
+
 	sb.WriteRune(' ')
 	sb.WriteString(strconv.FormatFloat(float64(v.W), 'f', options.FloatPrecision, 32))
-	// }
 
 	return sb.String()
 }
 
+// ErrVertexBadFieldX _
+// var ErrVertexBadFieldX = errors.New("bad field x")
+// // ErrVertexBadFieldY _
+// var ErrVertexBadFieldY = errors.New("bad field y")
+// // ErrVertexBadFieldZ _
+// var ErrVertexBadFieldZ = errors.New("bad field y")
+
 // UnmarshalVertex _
-func UnmarshalVertex(s string) (*GeometricVertex, error) {
-	match := regGeometricVertexFormat.FindStringSubmatch(s)
-	if match == nil {
-		return nil, ErrInvalidFormat
+func UnmarshalVertex(v string) (vertex GeometricVertex, rest string, ok bool) {
+	if v == "" {
+		ok = false
+		return
 	}
-
-	match = match[1:]
-
-	// ensure right number of arguments
-	args, _, err := parseFloatArguments(match, 3, 4)
-	if err != nil {
-		return nil, err
+	if v[0] != 'v' {
+		ok = false
+		return
 	}
-
-	for len(args) < 4 {
-		args = append(args, 1)
+	v, ok = skipSpaces(v[1:])
+	if !ok {
+		return
 	}
-
-	return &GeometricVertex{args[0], args[1], args[2], args[3]}, nil
+	x, v, ok := parseFloat(v)
+	if !ok {
+		return
+	}
+	v, ok = skipSpaces(v)
+	if !ok {
+		return
+	}
+	y, v, ok := parseFloat(v)
+	if !ok {
+		return
+	}
+	v, ok = skipSpaces(v)
+	if !ok {
+		return
+	}
+	z, v, ok := parseFloat(v)
+	if !ok {
+		return
+	}
+	if v == "" {
+		vertex = GeometricVertex{x, y, z, 0}
+		return
+	}
+	v, ok = skipSpaces(v)
+	if !ok {
+		return
+	}
+	if v == "" {
+		vertex = GeometricVertex{x, y, z, 0}
+		return
+	}
+	w, v, ok := parseFloat(v)
+	if !ok {
+		return
+	}
+	rest = v
+	vertex = GeometricVertex{x, y, z, w}
+	return
 }

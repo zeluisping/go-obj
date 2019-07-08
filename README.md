@@ -12,7 +12,6 @@ A pure Go implementation of a Wavefront .obj loader
 ## Elements
 - point (p)
 - line (l)
-- face (f)
 - curve (curv)
 - 2D curve (curv2)
 - surface (surf)
